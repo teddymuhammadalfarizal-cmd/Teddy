@@ -5,4 +5,4 @@ st.write("Wilujeng sumping di aplikasi AI buatan abi!")
 
 user_input = st.text_input("Tulis nami anjeun:")
 if user_input:
-    st.write(f"Halo {user_input}, hayu urang mulai ngoprek AI!")
+    st.write(f"Halo {user_input}, 

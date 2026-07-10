@@ -1,31 +1,37 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
+import io
+from PIL import Image
 
-# Konfigurasi API Key
-genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+st.title("Image Generator (Gemini/Imagen)")
 
-st.title("✨ AI Image Generator (Gemini)")
+# Input API Key (bisa ditaruh di st.secrets atau input text)
+api_key = st.text_input("Masukkan API Key Anda:", type="password")
 
-# Input Deskripsi
-prompt = st.text_area("Deskripsi gambar:", placeholder="Contona: Wanita keur di taman, gaya candid...")
+deskripsi = st.text_area("Deskripsi gambar:", "Wanita muda sawo matang")
 
 if st.button("Generate Image"):
-    if prompt:
-        with st.spinner("Nuju ngagambar ku Gemini... antosan sakedap!"):
-            try:
-                # Ngagunakeun Imagen 3 pikeun ngahasilkeun gambar
-                result = genai.generate_images(
-                    prompt=prompt,
-                    number_of_images=1,
-                    output_mime_type="image/jpeg"
+    if not api_key:
+        st.error("Cobi parios deui API Keyna (Mohon masukkan API Key terlebih dahulu).")
+    else:
+        try:
+            # Menginisialisasi client dengan library google-genai yang baru
+            client = genai.Client(api_key=api_key)
+            
+            with st.spinner("Nuju diproses, mangga antosan... (Sedang memproses...)"):
+                # Memanggil model Imagen 3 untuk generate gambar
+                result = client.models.generate_images(
+                    model='imagen-3.0-generate-002',
+                    prompt=deskripsi,
                 )
                 
-                # Nampilkeun gambar dina Streamlit
-                for image in result.generated_images:
-                    st.image(image.image.image_bytes, caption="Hasilna!")
+                # Mengambil gambar dari hasil response
+                for generated_image in result.generated_images:
+                    image_bytes = generated_image.image.image_bytes
+                    image = Image.open(io.BytesIO(image_bytes))
                     
-            except Exception as e:
-                st.error(f"Aya kasalahan: {e}")
-                st.write("Cobi parios deui API Key atanapi sambungan internetna.")
-    else:
-        st.warning("Mangga eusian heula deskripsi gambarna!")
+                    # Menampilkan gambar di Streamlit
+                    st.image(image, caption=deskripsi, use_container_width=True)
+                    
+        except Exception as e:
+            st.error(f"Aya kalepatan: {e}")

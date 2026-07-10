@@ -4,8 +4,28 @@ from google.genai import types
 from PIL import Image
 import io
 
+# ========================================================
+# KSTOMISASI WARNA LATAR & TEKS (DARK GRAY & WHITE)
+# ========================================================
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-color: #2F3136; /* Warna Kulawu Poék / Dark Gray */
+    }
+    h1, h2, h3, p, span, label {
+        color: #FFFFFF !important; /* Warna Téks Bodas */
+    }
+    .stSelectbox div div {
+        background-color: #40444B !important;
+        color: #FFFFFF !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # 1. Inisialisasi Gemini Client
-# SDK bakal otomatis milari GOOGLE_API_KEY atanapi GEMINI_API_KEY dina Streamlit Secrets
 client = genai.Client()
 
 # 2. Judul Utama Aplikasi
@@ -18,10 +38,18 @@ col1, col2 = st.columns(2)
 with col1:
     st.subheader("🖼️ Gambar Mentahan")
     img_base_file = st.file_uploader("Upload foto lokasi/objek asli", type=["jpg", "png", "jpeg"])
+    # Pintonan langsung saatos di-upload
+    if img_base_file:
+        image_base_preview = Image.open(img_base_file)
+        st.image(image_base_preview, caption="Preview Mentahan", use_container_width=True)
 
 with col2:
     st.subheader("🤹 Gambar Referensi")
     img_ref_file = st.file_uploader("Upload foto karakter/pose", type=["jpg", "png", "jpeg"])
+    # Pintonan langsung saatos di-upload
+    if img_ref_file:
+        image_ref_preview = Image.open(img_ref_file)
+        st.image(image_ref_preview, caption="Preview Referensi", use_container_width=True)
 
 st.write("---")
 
@@ -44,58 +72,36 @@ st.write("---")
 if st.button("🚀 GENERATE IMAGE", use_container_width=True):
     if img_base_file and img_ref_file:
         try:
-            # Peta pondok kanggo spinner
+            # 1️⃣ PROSES GEMINI
             with st.spinner("1️⃣ Gemini nuju nganalisa gambar & nyusun prompt... 🧠"):
-                # Buka gambar nganggo PIL
                 image_base = Image.open(img_base_file)
                 image_ref = Image.open(img_ref_file)
                 
-                # Konversi pilihan dropdown janten instruksi basa Inggris
-                camera_instruction = ""
-                if gaya_kamera == "iPhone 15 Pro Max HDR+":
-                    camera_instruction = "shot on iPhone 15 Pro Max, mobile photography, high dynamic range, vibrant colors, sharp details"
-                elif gaya_kamera == "Kamera DSLR":
-                    camera_instruction = "professional DSLR photography, shot on 85mm lens, sharp focus on subject, cinematic lighting, masterfully composed"
-                    
-                blur_instruction = "shallow depth of field, creamy bokeh background" if fokus_latar == "Bokeh blur" else "sharp focus, deep depth of field, clear background details"
+                camera_instruction = "shot on iPhone 15 Pro Max, mobile photography, HDR" if gaya_kamera == "iPhone 15 Pro Max HDR+" else "professional DSLR photography, 85mm lens"
+                blur_instruction = "shallow depth of field, creamy bokeh" if fokus_latar == "Bokeh blur" else "sharp focus, deep depth of field"
                 
-                # Prompt utama pikeun Gemini
                 main_prompt = f"""
-                You are an expert image prompt generator. Analyze these two images:
-                - Image 1 is the Base Image / Location / Environment.
-                - Image 2 is the Reference Subject / Pose.
-                
-                Create a highly detailed, single-paragraph English image generation prompt that blends them perfectly.
-                The final prompt must place the subject(s) from Image 2 into the exact environment of Image 1.
-                
-                Apply these specific user configurations strictly:
-                - Number of people to depict: {jumlah_orang}
-                - Photographic Style: {camera_instruction}
-                - Background Focus: {blur_instruction}
-                
-                Output ONLY the final detailed prompt in English, do not add any conversational filler.
+                Create a detailed image prompt blending these two. Place the subject from Image 2 inside the environment of Image 1.
+                Strictly apply: {jumlah_orang}, {camera_instruction}, {blur_instruction}. Output prompt ONLY.
                 """
                 
-                # Kirim ka Gemini nganggo model panganyarna gemini-2.0-flash
                 response = client.models.generate_content(
                     model='gemini-2.0-flash',
                     contents=[image_base, image_ref, main_prompt]
                 )
                 compiled_prompt = response.text
 
-            # Tembongkeun hasil prompt bilih hoyong dikoreksi
             with st.expander("📝 Tingal Prompt Hasil Racikan Gemini"):
                 st.text_area("Compiled Prompt:", compiled_prompt, height=100)
 
+            # 2️⃣ PROSES IMAGEN 3
             with st.spinner("2️⃣ Imagen 3 nuju ngadamel gambar anyar Akang... 🎨"):
-                # Konversi rasio gambar
                 imagen_aspect_ratio = "1:1"
                 if "16:9" in rasio_gambar:
                     imagen_aspect_ratio = "16:9"
                 elif "4:3" in rasio_gambar:
                     imagen_aspect_ratio = "4:3"
                 
-                # Kirim prompt ka Imagen 3
                 imagen_response = client.models.generate_images(
                     model='imagen-3.0-generate-002',
                     prompt=compiled_prompt,
@@ -107,13 +113,15 @@ if st.button("🚀 GENERATE IMAGE", use_container_width=True):
                     )
                 )
                 
-                # Tembongkeun hasil gambar
                 for generated_image in imagen_response.generated_images:
                     image_bytes = io.BytesIO(generated_image.image.image_bytes)
                     final_image = Image.open(image_bytes)
                     
                     st.subheader("✨ Hasil Gambar Anyar:")
                     st.image(final_image, caption=f"Hasil requested ku Kang Teddy ({rasio_gambar})", use_container_width=True)
+                    
+                    # 🎈 EFEK ANIMASI BALON UPAMI SUKSES
+                    st.balloons()
                     st.success("Hore! Gambar parantos ngawujud, mang! 🎉")
                     
         except Exception as e:

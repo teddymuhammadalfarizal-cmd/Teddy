@@ -5,7 +5,7 @@ from PIL import Image
 import io
 
 # 1. Inisialisasi Gemini Client
-# SDK bakal otomatis milari GOOGLE_API_KEY atanapi GEMINI_API_KEY dina Streamlit Secrets / Env
+# SDK bakal otomatis milari GOOGLE_API_KEY atanapi GEMINI_API_KEY dina Streamlit Secrets
 client = genai.Client()
 
 # 2. Judul Utama Aplikasi
@@ -45,7 +45,7 @@ if st.button("🚀 GENERATE IMAGE", use_container_width=True):
     if img_base_file and img_ref_file:
         try:
             # Peta pondok kanggo spinner
-            with st.spinner("1️⃣ Gemini 2.5 nuju nganalisa gambar & nyusun prompt... 🧠"):
+            with st.spinner("1️⃣ Gemini nuju nganalisa gambar & nyusun prompt... 🧠"):
                 # Buka gambar nganggo PIL
                 image_base = Image.open(img_base_file)
                 image_ref = Image.open(img_ref_file)
@@ -59,7 +59,7 @@ if st.button("🚀 GENERATE IMAGE", use_container_width=True):
                     
                 blur_instruction = "shallow depth of field, creamy bokeh background" if fokus_latar == "Bokeh blur" else "sharp focus, deep depth of field, clear background details"
                 
-                # Prompt utama pikeun Gemini 2.5 Flash
+                # Prompt utama pikeun Gemini
                 main_prompt = f"""
                 You are an expert image prompt generator. Analyze these two images:
                 - Image 1 is the Base Image / Location / Environment.
@@ -76,9 +76,9 @@ if st.button("🚀 GENERATE IMAGE", use_container_width=True):
                 Output ONLY the final detailed prompt in English, do not add any conversational filler.
                 """
                 
-                # Kirim ka Gemini 2.5 Flash
+                # Kirim ka Gemini nganggo model anu parantos di-update ku amang
                 response = client.models.generate_content(
-                    model='gemini-2.5-flash',
+                    model='gemini-1.5-flash-latest',
                     contents=[image_base, image_ref, main_prompt]
                 )
                 compiled_prompt = response.text

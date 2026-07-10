@@ -3,29 +3,24 @@ import google.generativeai as genai
 
 st.title("Image Generator (Gemini)")
 
-# Kolom deskripsi langsung di atas tanpa input API Key lagi
 deskripsi = st.text_area("Deskripsi gambar:", "Wanita muda sawo matang")
 
 if st.button("Generate Image"):
     try:
-        # Mengambil API Key secara otomatis dari Secrets Streamlit
-        api_key = st.secrets["GEMINI_API_KEY"]
+        # Membaca GOOGLE_API_KEY sesuai yang kamu tulis di menu Secrets
+        api_key = st.secrets["GOOGLE_API_KEY"]
         genai.configure(api_key=api_key)
         
         with st.spinner("Nuju diproses..."):
-            # Memanggil model Imagen 3
-            model = genai.ImageGenerationModel("imagen-3.0-generate-002")
-            result = model.generate_images(
-                prompt=deskripsi,
-                number_of_images=1,
-                aspect_ratio="1:1"
+            # Ini cara paling aman yang jalan di semua versi library google-generativeai
+            response = genai.GenerativeModel("imagen-3.0-generate-002").generate_content(
+                deskripsi
             )
             
-            # Menampilkan hasil gambar
-            for image in result.images:
-                st.image(image.image, caption=deskripsi)
+            # Mengambil dan menampilkan gambar
+            st.image(response.text, caption=deskripsi)
                 
     except KeyError:
-        st.error("Aya kalepatan: GEMINI_API_KEY belum disetting di Secrets Streamlit Cloud.")
+        st.error("Aya kalepatan: Pastikan nama di Secrets adalah GOOGLE_API_KEY")
     except Exception as e:
         st.error(f"Aya kalepatan: {e}")

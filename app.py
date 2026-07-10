@@ -76,9 +76,9 @@ if st.button("🚀 GENERATE IMAGE", use_container_width=True):
                 Output ONLY the final detailed prompt in English, do not add any conversational filler.
                 """
                 
-                # Kirim ka Gemini nganggo model anu parantos leres fungsina
+                # Kirim ka Gemini nganggo model panganyarna gemini-2.0-flash
                 response = client.models.generate_content(
-                    model='gemini-1.5-flash',
+                    model='gemini-2.0-flash',
                     contents=[image_base, image_ref, main_prompt]
                 )
                 compiled_prompt = response.text

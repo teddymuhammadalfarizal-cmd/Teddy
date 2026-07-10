@@ -1,23 +1,31 @@
 import streamlit as st
 import google.generativeai as genai
-from PIL import Image
-import io
 
-# Konfigurasi Gemini
+# Konfigurasi API Key
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-model = genai.GenerativeModel('imagen-3.0-generate-001')
 
 st.title("✨ AI Image Generator (Gemini)")
 
-prompt = st.text_area("Deskripsi gambar:")
+# Input Deskripsi
+prompt = st.text_area("Deskripsi gambar:", placeholder="Contona: Wanita keur di taman, gaya candid...")
 
 if st.button("Generate Image"):
     if prompt:
-        with st.spinner("Nuju ngagambar ku Gemini..."):
+        with st.spinner("Nuju ngagambar ku Gemini... antosan sakedap!"):
             try:
-                result = model.generate_images(prompt=prompt)
+                # Ngagunakeun Imagen 3 pikeun ngahasilkeun gambar
+                result = genai.generate_images(
+                    prompt=prompt,
+                    number_of_images=1,
+                    output_mime_type="image/jpeg"
+                )
+                
+                # Nampilkeun gambar dina Streamlit
                 for image in result.generated_images:
-                    img = Image.open(io.BytesIO(image.image.image_bytes))
-                    st.image(img, caption="Hasilna!")
+                    st.image(image.image.image_bytes, caption="Hasilna!")
+                    
             except Exception as e:
                 st.error(f"Aya kasalahan: {e}")
+                st.write("Cobi parios deui API Key atanapi sambungan internetna.")
+    else:
+        st.warning("Mangga eusian heula deskripsi gambarna!")
